@@ -1,4 +1,4 @@
-VERSION='0.0.0'
+VERSION='0.0.1'
 import os, sys, glob, time, json
 PROG=os.path.basename(sys.argv[0])
 debug=verbosity=0
