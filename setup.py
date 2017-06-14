@@ -21,4 +21,5 @@ if __name__=='__main__':
         url='https://bitbucket.org/MrRLBitBucket/rl_ci_tools',
         py_modules=['rl_ci_tools'],
         requires=['requests'],
+        install_requires=['requests'],
         )
