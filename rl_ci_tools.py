@@ -1,4 +1,4 @@
-VERSION='0.0.1'
+VERSION='0.0.2'
 import os, sys, glob, time, json
 PROG=os.path.basename(sys.argv[0])
 debug=verbosity=0
@@ -102,6 +102,14 @@ class PyPiRequestor():
             print('%s: uploaded %r to %r.' % (PROG,fn,url))
         return resp.status_code
 
+    def package_version(self,u,p,pkg):
+        I = self.info(u,p,'package','%s-*' % pkg)
+        if not I:
+            v = 'unknown'
+        else:
+            v = '.'.join(map(str,list(sorted([tuple([int(x) for x in i[0].split('-',2)[1].split('.') if x and x[0] in '0123456789']) for i in I]))[-1]))
+        return (pkg,v)
+
 def getoption(key,default=0,cnv=int):
     key = '--%s=' % key
     v = [x for x in sys.argv if x.startswith(key)]
@@ -117,16 +125,20 @@ def _file_info(fn):
     st = os.stat(fn)
     return (fn,st.st_size,st.st_mtime)
 
-def tabulate(I):
+def tabulate(I,
+                hdrs=['Name','Length',(5*' ')+'Modified'],
+                fmtmpl8='{:<%d}\x20{:>%d}\x20\x20{:<%d}',
+                cnvf=(str,str,lambda t: time.strftime('%Y%m%d %H:%M:%S',time.localtime(t))),
+                ):
     if I:
-        rows = [['Name','Length',(5*' ')+'Modified']]
-        for nm,sz,mt in I:
-            rows.append([nm,str(sz),time.strftime('%Y%m%d %H:%M:%S',time.localtime(mt))])
+        rows = [hdrs]
+        for row in I:
+            rows.append([c(r) for c,r in zip(cnvf,row)])
         W = [max(map(len,col)) for col in [list(i) for i in zip(*rows)]]
         if debug>3:
             print('tabluate: rows=%s' % repr(rows))
             print('tabluate: W=%s' % repr(W))
-        fmt = '{:<%d} {:>%d}    {:<%d}' % tuple(W)
+        fmt = fmtmpl8 % tuple(W)
         print('\n'.join(fmt.format(*i) for i in rows))
 
 def main():
@@ -161,36 +173,52 @@ def main():
         cmd = sys.argv[1]
     except:
         cmd = 'help'
-    pypi = PyPiRequestor(debug=debug)
-    if cmd=='test':
-        status_code = pypi.login(u,p)
-        if debug:
-            print('status=%s' % status_code)
-    elif cmd.startswith('download-'):
-        kind = cmd.split('-')[1]
-        if not kind in ('resources','packages'):
-            raise ValueError('%s: invalid download kind: %r' % (PROG,kind))
-        if dst and not os.path.isdir(dst):
-            raise ValueError('%s: %r is not a directory!' % (PROG,dst))
-        for fn in sys.argv[2:]:
-            pypi.download(u,p,kind,fn,dst)
-    elif cmd.endswith('-info'):
-        kind = cmd.split('-')[0]
-        if not kind in ('resource','package'):
-            raise ValueError('%s: invalid info kind: %r' % (PROG,kind))
-        tabulate([i for fn in sys.argv[2:] for i in pypi.info(u,p,kind,fn)])
-    elif cmd.startswith('upload-'):
-        kind = cmd.split('-')[1]
-        if not kind in ('resources','packages'):
-            raise ValueError('%s: invalid upload kind: %r' % (PROG,kind))
-        for pat in sys.argv[2:]:
-            for fn in glob.glob(pat):
-                pypi.upload(u,p,kind[:-1],fn)
+    if cmd=='env':
+        print('Environment')
+        print('===========')
+        I = list(sorted(os.environ.iteritems()))
+        i = max([len(i[0]) for i in I])
+        print(('{:<%d}  {}' % i).format('Key','Value'))
+        fmt  = '{:<%d} = {}' % i
+        for i in I:
+            print(fmt.format(*i))
     elif cmd=='info':
         tabulate([_file_info(i) for fn in sys.argv[2:] for i in glob.glob(fn)])
     elif cmd=='help':
-        print('Usage %s [test|info|download-[resources|packages]|upload-[resources|packages]|[package|resource]-info] path....' % PROG)
+        print('Usage %s [test|info|env|download-[resources|packages]|upload-[resources|packages]|[packages|resources]-info] path....' % PROG)
     else:
-        raise ValueError('%s: nknown command %r' % (PROG,cmd))
+        pypi = PyPiRequestor(debug=debug)
+        if cmd=='test':
+            status_code = pypi.login(u,p)
+            if debug:
+                print('status=%s' % status_code)
+        elif cmd.startswith('download-'):
+            kind = cmd.split('-')[1]
+            if not kind in ('resources','packages'):
+                raise ValueError('%s: invalid download kind: %r' % (PROG,kind))
+            if dst and not os.path.isdir(dst):
+                raise ValueError('%s: %r is not a directory!' % (PROG,dst))
+            for fn in sys.argv[2:]:
+                pypi.download(u,p,kind,fn,dst)
+        elif cmd.endswith('-info'):
+            kind = cmd.split('-')[0]
+            if not kind in ('resource','package'):
+                raise ValueError('%s: invalid info kind: %r' % (PROG,kind))
+            tabulate([i for fn in sys.argv[2:] for i in pypi.info(u,p,kind,fn)])
+        elif cmd.startswith('upload-'):
+            kind = cmd.split('-')[1]
+            if not kind in ('resources','packages'):
+                raise ValueError('%s: invalid upload kind: %r' % (PROG,kind))
+            for pat in sys.argv[2:]:
+                for fn in glob.glob(pat):
+                    pypi.upload(u,p,kind[:-1],fn)
+        elif cmd=='package-version':
+            tabulate([pypi.package_version(u,p,fn) for fn in sys.argv[2:]],
+                    hdrs = ['Package','Version'],
+                    fmtmpl8 = '{:<%d}  {:>%d}',
+                    cnvf = (str,str),
+                    )
+        else:
+            raise ValueError('%s: nknown command %r' % (PROG,cmd))
 if __name__=='__main__':
     main()
