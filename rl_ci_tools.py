@@ -125,6 +125,19 @@ def _file_info(fn):
     st = os.stat(fn)
     return (fn,st.st_size,st.st_mtime)
 
+def _list_fs(patterns,recur=False):
+    for pat in patterns:
+        for fn in glob.glob(pat):
+            if not recur:
+                yield fn
+            elif os.path.isdir(fn):
+                for r,s,F in os.walk(fn):
+                    yield r
+                    for f in F:
+                        yield os.path.join(r,f)
+            else:
+                yield fn
+
 def tabulate(I,
                 hdrs=['Name','Length',(5*' ')+'Modified'],
                 fmtmpl8='{:<%d}\x20{:>%d}\x20\x20{:<%d}',
@@ -183,7 +196,11 @@ def main():
         for i in I:
             print(fmt.format(*i))
     elif cmd=='info':
-        tabulate([_file_info(i) for fn in sys.argv[2:] for i in glob.glob(fn)])
+        recur = [fn for fn in sys.argv[2:] if fn=='--recur']
+        if recur:
+            map(sys.argv.remove,recur)
+            recur = True
+        tabulate([_file_info(i) for i in _list_fs(sys.argv[2:],recur)])
     elif cmd=='help':
         print('Usage %s [test|info|env|download-[resources|packages]|upload-[resources|packages]|[packages|resources]-info] path....' % PROG)
     else:
