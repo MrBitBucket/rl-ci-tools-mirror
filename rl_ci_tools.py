@@ -240,13 +240,13 @@ def main():
             kind = cmd.split('-')[0]
             if not kind in ('resource','package', 'cache'):
                 raise ValueError('%s: invalid info kind: %r' % (PROG,kind))
-            subdir = getoption('subdir','',str) if kind=='cache' else None
+            subdir = getoption('subdir','',str) if kind=='cache' else ''
             tabulate([i for fn in sys.argv[2:] for i in pypi.info(u,p,kind,fn,subdir)])
         elif cmd.startswith('upload-'):
             kind = cmd.split('-')[1]
             if not kind in ('resources','packages', 'caches'):
                 raise ValueError('%s: invalid upload kind: %r' % (PROG,kind))
-            subdir = getoption('subdir','',str) if kind=='caches' else None
+            subdir = getoption('subdir','',str) if kind=='caches' else ''
             for pat in sys.argv[2:]:
                 for fn in glob.glob(pat):
                     pypi.upload(u,p,kind[:-1],fn,subdir)
