@@ -67,9 +67,11 @@ class PyPiRequestor():
         for i in self.info(u,p,kind[:-1],fn):
             self._download(u,p,kind,i[0],dst)
 
-    def info(self,u,p,kind,pat):
+    def info(self,u,p,kind,pat,subdir=''):
         #self.login(u,p)
-        url = '%s/pypi/%s-info/%s/?json=1' % (self.root,kind,pat)
+        if subdir:
+            subdir += '/'
+        url = '%s/pypi/%s-info/%s%s/?json=1' % (self.root,kind,subdir,pat)
         resp = self.session.get(url,
                 #data=dict(csrfmiddlewaretoken=self.session.cookies['csrftoken']),
                 headers = dict(Referer=self.loginurl),
@@ -85,9 +87,11 @@ class PyPiRequestor():
             print('%s: %r --> %d rows' % (PROG, url, len(I)))
         return I
 
-    def upload(self,u,p,kind,fn):
+    def upload(self,u,p,kind,fn,subdir=''):
         self.login(u,p)
-        url = '%s/pypi/upload-%s/' % (self.root,kind)
+        if subdir:
+            subdir = '/' + subdir
+        url = '%s/pypi/upload-%s%s/' % (self.root,kind,subdir)
         files= dict(file=(os.path.basename(fn),open(fn,'rb'),'application/octet-stream'))
         resp = self.session.post(url,
                 data=dict(csrfmiddlewaretoken=self.session.cookies['csrftoken']),
@@ -100,6 +104,21 @@ class PyPiRequestor():
             raise ValueError('%s: upload %r failed with status_code=%r!\n%r' % (PROG,url,status_code,text))
         if verbosity:
             print('%s: uploaded %r to %r.' % (PROG,fn,url))
+        return resp.status_code
+
+    def clear_cache(self,u,p,fn):
+        self.login(u,p)
+        url = '%s/pypi/clear-cache/%s/' % (self.root,fn)
+        resp = self.session.post(url,
+                data=dict(csrfmiddlewaretoken=self.session.cookies['csrftoken']),
+                headers = dict(Referer=self.loginurl),
+                )
+        status_code = resp.status_code
+        text = resp.text
+        if not text.endswith('OK') or status_code!=200:
+            raise ValueError('%s: clear-cache %r failed with status_code=%r!\n%r' % (PROG,url,status_code,text))
+        if verbosity:
+            print('%s: cleared cache %r.' % (PROG,fn))
         return resp.status_code
 
     def package_version(self,u,p,pkg):
@@ -211,7 +230,7 @@ def main():
                 print('status=%s' % status_code)
         elif cmd.startswith('download-'):
             kind = cmd.split('-')[1]
-            if not kind in ('resources','packages'):
+            if not kind in ('resources','packages', 'caches'):
                 raise ValueError('%s: invalid download kind: %r' % (PROG,kind))
             if dst and not os.path.isdir(dst):
                 raise ValueError('%s: %r is not a directory!' % (PROG,dst))
@@ -219,16 +238,21 @@ def main():
                 pypi.download(u,p,kind,fn,dst)
         elif cmd.endswith('-info'):
             kind = cmd.split('-')[0]
-            if not kind in ('resource','package'):
+            if not kind in ('resource','package', 'cache'):
                 raise ValueError('%s: invalid info kind: %r' % (PROG,kind))
-            tabulate([i for fn in sys.argv[2:] for i in pypi.info(u,p,kind,fn)])
+            subdir = getoption('subdir','',str) if kind=='cache' else None
+            tabulate([i for fn in sys.argv[2:] for i in pypi.info(u,p,kind,fn,subdir)])
         elif cmd.startswith('upload-'):
             kind = cmd.split('-')[1]
-            if not kind in ('resources','packages'):
+            if not kind in ('resources','packages', 'caches'):
                 raise ValueError('%s: invalid upload kind: %r' % (PROG,kind))
+            subdir = getoption('subdir','',str) if kind=='caches' else None
             for pat in sys.argv[2:]:
                 for fn in glob.glob(pat):
-                    pypi.upload(u,p,kind[:-1],fn)
+                    pypi.upload(u,p,kind[:-1],fn,subdir)
+        elif cmd=='clear-cache':
+            for fn in sys.argv[2:]:
+                pypi.clear_cache(u,p,fn)
         elif cmd=='package-version':
             tabulate([pypi.package_version(u,p,fn) for fn in sys.argv[2:]],
                     hdrs = ['Package','Version'],
@@ -236,6 +260,6 @@ def main():
                     cnvf = (str,str),
                     )
         else:
-            raise ValueError('%s: nknown command %r' % (PROG,cmd))
+            raise ValueError('%s: unknown command %r' % (PROG,cmd))
 if __name__=='__main__':
     main()
