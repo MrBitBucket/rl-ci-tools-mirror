@@ -121,6 +121,25 @@ class PyPiRequestor():
             print('%s: cleared cache %r.' % (PROG,fn))
         return resp.status_code
 
+    def email(self,u,p,subject,faddr,taddr,body):
+        self.login(u,p)
+        url = '%s/pypi/email/' % self.root
+        resp = self.session.post(url,
+                data=dict(csrfmiddlewaretoken=self.session.cookies['csrftoken'],
+                            subject = subject,
+                            faddr = faddr,
+                            taddr = taddr,
+                            body = body.replace('\\n','\n')),
+                headers = dict(Referer=self.loginurl),
+                )
+        status_code = resp.status_code
+        text = resp.text
+        if not text.endswith('OK') or status_code!=200:
+            raise ValueError('%s: %r failed with status_code=%r!\n%r' % (PROG,url,status_code,text))
+        if verbosity:
+            print('%s: email to %r(%r) sent.' % (PROG,taddr,subject))
+        return resp.status_code
+
     def package_version(self,u,p,pkg):
         I = self.info(u,p,'package','%s-*' % pkg)
         if not I:
@@ -253,6 +272,12 @@ def main():
         elif cmd=='clear-cache':
             for fn in sys.argv[2:]:
                 pypi.clear_cache(u,p,fn)
+        elif cmd=='email':
+            subject = getoption('subject','unknown',str)
+            faddr = getoption('faddr','bitbucket@reportlab.com',str)
+            taddr = getoption('taddr','live_errors@reportlab.com',str)
+            body = getoption('body','live_errors@reportlab.com',str)
+            pypi.email(u,p,subject,faddr,taddr,body)
         elif cmd=='package-version':
             tabulate([pypi.package_version(u,p,fn) for fn in sys.argv[2:]],
                     hdrs = ['Package','Version'],
