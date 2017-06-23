@@ -1,25 +1,28 @@
 #!/bin/bash
-UNICODE_WIDTHS='16 32'
-PYTHON_VERSIONS='2.7 3.3 3.4 3.5 3.6'
-ARCHS='x86_64 i686'
-IMAGESRC=quay.io/pypa
+cd "$(dirname "${BASH_SOURCE[0]}")"
+UNICODES=${UNICODES:-'16 32'}
+PYTHONS=${PYTHONS:-'2.7 3.3 3.4 3.5 3.6'}
+ARCHS=${ARCHS:-'x86_64 i686'}
+IMAGESRC=${IMAGESRC:-quay.io/pypa}
 REPO=${REPO:-https://bitbucket.org/rptlab/reportlab}
-REQUIREMENT=${REPO:-$(basename ${REPO})}
+BRANCH=${BRANCHE:-default}
+REQUIREMENT=${REQUIREMENT:-$(basename ${REPO})}
 DOCKER_SCRIPT=${DOCKER_SCRIPT:-container-test-wheels}
 DOCKER_PATH=${DOCKER_PATH:-/io/${DOCKER_SCRIPT}}
-sudo rm -rf test-src
+sudo rm -rf test-src test-results.txt test-env
 hg clone ${REPO} test-src
 [ -n "$REVISION" ] && (cd test-src && hg up "$REVISION")
 #IMAGESRC=rl
 for arch in ${ARCHS}; do
 	DOCKER_IMAGE=${IMAGESRC}/manylinux1_${arch}
+	docker pull $DOCKER_IMAGE
 	docker run --rm \
 		${DOCKER_ARGS} \
-		-e PYTHON_VERSIONS="$PYTHON_VERSIONS" \
-		-e UNICODE_WIDTHS="$UNICODE_WIDTHS" \
+		-e PYTHONS="$PYTHONS" \
+		-e UNICODES="$UNICODES" \
 		-e REPO="$REPO" \
 		-e REQUIREMENT="$REQUIREMENT" \
 		-e ARCH="$arch" \
 		-v $(pwd):/io ${DOCKER_IMAGE} ${DOCKER_PATH}
 done
-sudo rm -rf reportlab-src test-env
+sudo rm -rf test-src test-env

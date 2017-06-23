@@ -2,12 +2,12 @@
 # Run with:
 #	 docker run --rm -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/reportlab-wheels.sh
 # or something like:
-#	 docker run --rm -e PYTHON_VERSIONS=2.7 -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/reportlab-wheels.sh
+#	 docker run --rm -e PYTHONS=2.7 -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/reportlab-wheels.sh
 # or:
-#	 docker run --rm -e PYTHON_VERSIONS=2.7 -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/reportlab-wheels.sh
+#	 docker run --rm -e PYTHONS=2.7 -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/reportlab-wheels.sh
 set -e
 
-UNICODE_WIDTHS=${UNICODE_WIDTHS:-16 32}
+UNICODES=${UNICODES:-16 32}
 WHEELHOUSE=${WHEELHOUSE:-/io/wheelhouse}
 WHEELS_UNFIXED=${WHEELS_UNFIXED:-/io/wheels_unfixed}
 
@@ -48,10 +48,10 @@ OPATH="$PATH"
 export RL_MANYLINUX=1
 
 # Compile wheels
-for PYTHON in ${PYTHON_VERSIONS}; do
+for PYTHON in ${PYTHONS}; do
 	[ $(lex_ver $PYTHON) -lt $(lex_ver $PYLO) ] && continue
 	[ $(lex_ver $PYTHON) -ge $(lex_ver $PYHI) ] && continue
-	for uw in ${UNICODE_WIDTHS}; do
+	for uw in ${UNICODES}; do
 		[ $(lex_ver $PYTHON) -ge $(lex_ver 3.3) ] && [ "$uw" != 32 ] && continue
 		(
 		export UNICODE_WIDTH="$uw"
@@ -63,7 +63,7 @@ for PYTHON in ${PYTHON_VERSIONS}; do
 		PIP="$PP/bin/pip"
 		$PIP install wheel setuptools -U
 		echo "Building reportlab for Python $PYTHON"
-		$PIP wheel --no-binary=:all: --no-deps -w "${WHEELS_UNFIXED}" -e "${REPO}#egg=${REQUIREMENT}"
+		$PIP wheel --no-binary=:all: --no-deps -w "${WHEELS_UNFIXED}" --cache-dir=.pip-cache ${REPO}/get/${BRANCH}.tar.gz
 		)
 	done
 done

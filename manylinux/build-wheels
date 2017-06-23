@@ -1,16 +1,17 @@
 #!/bin/bash
 set -ev
 cd "$(dirname "${BASH_SOURCE[0]}")"
-UNICODE_WIDTHS='16 32'
-PYTHON_VERSIONS='2.7 3.3 3.4 3.5 3.6'
-ARCHS='x86_64 i686'
-IMAGESRC=quay.io/pypa
+UNICODES=${UNICODES:-'16 32'}
+PYTHONS=${PYTHONS:-'2.7 3.3 3.4 3.5 3.6'}
+ARCHS=${ARCHS:-'x86_64 i686'}
+IMAGESRC=${IMAGESRC:-quay.io/pypa}
 REPO=${REPO:-https://bitbucket.org/rptlab/reportlab}
-REQUIREMENT=${REPO:-$(basename ${REPO})}
+BRANCH=${BRANCH:-default}
+REQUIREMENT=${REQUIREMENT:-$(basename ${REPO})}
 DOCKER_SCRIPT=${DOCKER_SCRIPT:-container-build-wheels}
 DOCKER_PATH=${DOCKER_PATH:-/io/${DOCKER_SCRIPT}}
-#IMAGESRC=rl
-sudo rm -rf wheels wheelsu
+
+sudo rm -rf wheels wheelsu .pip-cache
 mkdir wheels wheelsu
 for arch in ${ARCHS}; do
 	sudo rm -rf wheelhouse wheels_unfixed
@@ -19,9 +20,10 @@ for arch in ${ARCHS}; do
 	docker pull $DOCKER_IMAGE
 	docker run --rm \
 		${DOCKER_ARGS} \
-		-e PYTHON_VERSIONS="$PYTHON_VERSIONS" \
-		-e UNICODE_WIDTHS="$UNICODE_WIDTHS" \
+		-e PYTHONS="$PYTHONS" \
+		-e UNICODES="$UNICODES" \
 		-e REPO="$REPO" \
+		-e BRANCH="$BRANCH" \
 		-e REQUIREMENT="$REQUIREMENT" \
 		-e ARCH="$arch" \
 		-v $(pwd):/io ${DOCKER_IMAGE}  ${DOCKER_PATH}
