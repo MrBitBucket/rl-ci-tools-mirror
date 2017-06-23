@@ -1,0 +1,25 @@
+#!/bin/bash
+set -ev
+UNICODE_WIDTHS='16 32'
+PYTHON_VERSIONS='2.7 3.3 3.4 3.5 3.6'
+ARCHS='x86_64 i686'
+IMAGESRC=quay.io/pypa
+REPO=${REPO:-https://bitbucket.org/rptlab/reportlab}
+REQUIREMENT=${REPO:-$(basename ${REPO})}
+DOCKER_SCRIPT=${DOCKER_SCRIPT:-container-build-wheels.sh}
+#IMAGESRC=rl
+sudo rm -rf wheels wheelsu
+mkdir wheels wheelsu
+for arch in ${ARCHS}; do
+	sudo rm -rf wheelhouse wheels_unfixed
+	mkdir wheelhouse wheels_unfixed
+	DOCKER_IMAGE=${IMAGESRC}/manylinux1_${arch}
+	docker pull $DOCKER_IMAGE
+	docker run --rm \
+		-e PYTHON_VERSIONS="$PYTHON_VERSIONS" \
+		-e UNICODE_WIDTHS="$UNICODE_WIDTHS" \
+		-e REPO="$REPO" \
+		-e REEQUIREMENT="$REQUIREMENT" \
+		-e ARCH="$arch" \
+		-v $(pwd):/io ${DOCKER_IMAGE} /io/rl_ci_tools/manylinux/${DOCKER_SCRIPT}
+done
