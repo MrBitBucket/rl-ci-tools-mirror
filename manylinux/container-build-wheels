@@ -1,15 +1,15 @@
 #!/bin/bash
 # Run with:
-#	 docker run --rm -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/rl_ci_tools/manylinux/reportlab-wheels.sh
+#	 docker run --rm -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/reportlab-wheels.sh
 # or something like:
-#	 docker run --rm -e PYTHON_VERSIONS=2.7 -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/rl_ci_tools/manylinux/reportlab-wheels.sh
+#	 docker run --rm -e PYTHON_VERSIONS=2.7 -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/reportlab-wheels.sh
 # or:
-#	 docker run --rm -e PYTHON_VERSIONS=2.7 -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/rl_ci_tools/manylinux/reportlab-wheels.sh
+#	 docker run --rm -e PYTHON_VERSIONS=2.7 -v $PWD:/io quay.io/pypa/manylinux1_x86_64 /io/reportlab-wheels.sh
 set -e
 
 UNICODE_WIDTHS=${UNICODE_WIDTHS:-16 32}
-WHEELHOUSE=${WHEELHOUSE:-/io/rl_ci_tools/manylinux/wheelhouse}
-WHEELS_UNFIXED=${WHEELS_UNFIXED:-/io/rl_ci_tools/manylinux/wheels_unfixed}
+WHEELHOUSE=${WHEELHOUSE:-/io/wheelhouse}
+WHEELS_UNFIXED=${WHEELS_UNFIXED:-/io/wheels_unfixed}
 
 mark(){
 	echo "######################################################################################"
@@ -17,10 +17,10 @@ mark(){
 	}
 
 # Manylinux, openblas version, lex_ver etc etc
-mark source /io/rl_ci_tools/manylinux/manylinux_utils.sh
-source /io/rl_ci_tools/manylinux/manylinux_utils.sh
-mark source /io/rl_ci_tools/manylinux/library_builders.sh
-source /io/rl_ci_tools/manylinux/library_builders.sh
+mark source /io/manylinux_utils.sh
+source /io/manylinux_utils.sh
+mark source /io/library_builders.sh
+source /io/library_builders.sh
 mark "$(env)"
 
 #mark build_jpeg

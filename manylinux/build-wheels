@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ev
+cd "$(dirname "${BASH_SOURCE[0]}")"
 UNICODE_WIDTHS='16 32'
 PYTHON_VERSIONS='2.7 3.3 3.4 3.5 3.6'
 ARCHS='x86_64 i686'
@@ -7,7 +8,7 @@ IMAGESRC=quay.io/pypa
 REPO=${REPO:-https://bitbucket.org/rptlab/reportlab}
 REQUIREMENT=${REPO:-$(basename ${REPO})}
 DOCKER_SCRIPT=${DOCKER_SCRIPT:-container-build-wheels}
-DOCKER_PATH=${DOCKER_PATH:-/io/rl_ci_tools/manylinux/${DOCKER_SCRIPT}}
+DOCKER_PATH=${DOCKER_PATH:-/io/${DOCKER_SCRIPT}}
 #IMAGESRC=rl
 sudo rm -rf wheels wheelsu
 mkdir wheels wheelsu
@@ -22,7 +23,6 @@ for arch in ${ARCHS}; do
 		-e UNICODE_WIDTHS="$UNICODE_WIDTHS" \
 		-e REPO="$REPO" \
 		-e REQUIREMENT="$REQUIREMENT" \
-		-e DOCKER_PATH="$DOCKER_PATH" \
 		-e ARCH="$arch" \
 		-v $(pwd):/io ${DOCKER_IMAGE}  ${DOCKER_PATH}
 	cp wheelhouse/* wheels/
