@@ -6,7 +6,7 @@ ARCHS='x86_64 i686'
 IMAGESRC=quay.io/pypa
 REPO=${REPO:-https://bitbucket.org/rptlab/reportlab}
 REQUIREMENT=${REPO:-$(basename ${REPO})}
-DOCKER_SCRIPT=${DOCKER_SCRIPT:-container-build-wheels.sh}
+DOCKER_SCRIPT=${DOCKER_SCRIPT:-container-build-wheels}
 #IMAGESRC=rl
 sudo rm -rf wheels wheelsu
 mkdir wheels wheelsu

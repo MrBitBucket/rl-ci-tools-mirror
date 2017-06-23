@@ -5,7 +5,7 @@ ARCHS='x86_64 i686'
 IMAGESRC=quay.io/pypa
 REPO=${REPO:-https://bitbucket.org/rptlab/reportlab}
 REQUIREMENT=${REPO:-$(basename ${REPO})}
-DOCKER_SCRIPT=${DOCKER_SCRIPT:-container-test-wheels.sh}
+DOCKER_SCRIPT=${DOCKER_SCRIPT:-container-test-wheels}
 sudo rm -rf test-src
 hg clone ${REPO} test-src
 [ -n "$REVISION" ] && (cd test-src && hg up "$REVISION")
