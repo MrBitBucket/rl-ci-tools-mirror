@@ -33,8 +33,10 @@ mark "$(env)"
 #build_lcms2
 #mark build_libwebp
 #build_libwebp
-mark build_freetype
-build_freetype
+if [ "$REQUIREMENT" = "reportlab" ]; then
+	mark build_freetype
+	build_freetype
+fi
 #yum install -y tk-devel
 #yum install mercurial
 
