@@ -48,3 +48,4 @@ syntax: regexp
 ^[Ll]ib/
 ^bin/
 ^[tT]cl/
+^[iI]nclude/

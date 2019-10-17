@@ -82,7 +82,7 @@ class PyPiRequestor():
             print('!!!!!\n%r\n!!!!!'% b)
         if status_code!=200:
             raise ValueError('%s: request %r failed with status_code=%r!\n%r' % (PROG,url,status_code,b))
-        I = json.loads(b)
+        I = json.loads(b.decode('utf-8') if hasattr(b,'decode') else b)
         if verbosity>1:
             print('%s: %r --> %d rows' % (PROG, url, len(I)))
         return I
