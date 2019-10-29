@@ -227,7 +227,7 @@ def main():
     if cmd=='env':
         print('Environment')
         print('===========')
-        I = list(sorted(os.environ.iteritems()))
+        I = list(sorted(os.environ.items()))
         i = max([len(i[0]) for i in I])
         print(('{:<%d}  {}' % i).format('Key','Value'))
         fmt  = '{:<%d} = {}' % i
